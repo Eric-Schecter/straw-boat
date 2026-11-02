@@ -1,0 +1,14 @@
+# Godot cache and generated imports
+.godot/
+*.import
+
+# Builds, local templates and experiments
+build/
+.export_templates/
+artifacts/
+
+# Local files
+.DS_Store
+*.log
+.env
+.env.*
