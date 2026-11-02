@@ -38,6 +38,7 @@ jobs:
         run: |
           godot --headless --editor --import --quit
           godot --headless -- --boat-test
+          godot --headless --script tests/audio_playback.gd
       - name: Export
         run: ./tools/export_web.sh
       - uses: actions/configure-pages@v5

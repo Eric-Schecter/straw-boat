@@ -17,6 +17,7 @@ var target_progress := 0.0
 var audio: AudioStreamPlayer
 var notes: Array[AudioStreamWAV] = []
 var fanfare: AudioStreamWAV
+var victory_audio: AudioStreamPlayer
 var impact_audio: AudioStreamPlayer
 var impact_sounds: Dictionary = {}
 var last_impact := ""
@@ -31,6 +32,12 @@ func _ready() -> void:
 	add_child(impact_audio)
 	for kind in ["hull","clang","defeat"]: impact_sounds[kind] = make_impact(kind)
 	fanfare = make_sound([523.25,659.25,783.99,1046.5], 1.45)
+	# The final catch and victory occur in one frame. Keep the fanfare on a
+	# preassigned, independent player rather than replacing the catch sample.
+	victory_audio = AudioStreamPlayer.new()
+	victory_audio.stream = fanfare
+	victory_audio.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+	add_child(victory_audio)
 
 func make_sound(pitches: Array, duration: float) -> AudioStreamWAV:
 	var data = PackedByteArray()
@@ -89,6 +96,7 @@ func reset() -> void:
 	target_progress = 0
 	audio.stop()
 	impact_audio.stop()
+	victory_audio.stop()
 	last_impact = ""
 
 func catch_arrow(pos: Vector2, combo: int, goal: int, count: int, _points: int) -> void:
@@ -112,8 +120,7 @@ func celebrate(perfect: bool) -> void:
 	banner_left = 2.0
 	for i in range(3): rings.append({"p":boat_center,"age":-i*0.2,"color":GOLD})
 	if not "--boat-test" in OS.get_cmdline_user_args():
-		audio.stream = fanfare
-		audio.play()
+		victory_audio.play()
 
 func tick(dt: float) -> void:
 	pulse = maxf(0,pulse-dt*4)
