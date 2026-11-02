@@ -32,6 +32,8 @@ jobs:
         with:
           path: .export_templates
           key: godot-web-${{ env.GODOT_VERSION }}
+      - name: Test web loading
+        run: node --test tests/web_loading.test.mjs
       - name: Import and test
         run: |
           godot --headless --editor --import --quit

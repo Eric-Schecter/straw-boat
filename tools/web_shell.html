@@ -16,22 +16,39 @@ $GODOT_HEAD_INCLUDE
 </head>
 <body>
 <canvas id="canvas" tabindex="0">Your browser needs WebGL 2 to play Strawboat.</canvas>
-<div id="launch"><div class="panel"><h1>Strawboat</h1><progress id="progress"></progress><button id="play" disabled>Loading…</button><p id="status">Preparing your boat</p><p id="error"></p></div></div>
+<div id="launch"><div class="panel"><h1>Strawboat</h1><progress id="progress"></progress><button id="play" hidden disabled>Play</button><p id="status">Preparing your boat</p><p id="error"></p></div></div>
 <script src="$GODOT_URL"></script>
 <script>
-const engine = new Engine($GODOT_CONFIG);
+const config = $GODOT_CONFIG;
+const canvas=document.getElementById('canvas');
 const play=document.getElementById('play'),bar=document.getElementById('progress'),status=document.getElementById('status');
-let ready=true;
-bar.style.display='none';play.disabled=false;play.textContent='Play';status.textContent='';
+config.canvas=canvas;
+config.onProgress=(current,total)=>{
+ if(total){bar.max=total;bar.value=current;}
+ else bar.removeAttribute('value');
+};
+const engine = new Engine(config);
+const executable=config.executable;
+const pack=config.mainPack || `${executable}.pck`;
+let ready=false;
+// Download and initialize the runtime without starting the game clock or audio.
+Promise.all([engine.init(executable),engine.preloadFile(pack,pack)]).then(()=>{
+ ready=true;bar.style.display='none';status.textContent='Ready to sail';
+ play.disabled=false;play.hidden=false;
+}).catch(showError);
 play.addEventListener('click',async()=>{
  if(!ready)return;
- play.disabled=true;play.textContent='Setting sail…';bar.style.display='block';
+ ready=false;play.disabled=true;play.textContent='Setting sail…';status.textContent='';
  try {
-  await engine.startGame({canvas:document.getElementById('canvas'),onProgress:(current,total)=>{if(total){bar.value=current;bar.max=total;}}});
-  document.getElementById('launch').remove();document.getElementById('canvas').focus();
+  // start() reuses the prepared runtime and pack; no second resource download.
+  await engine.start({args:['--main-pack',pack,...(config.args || [])]});
+  document.getElementById('launch').remove();canvas.focus();
  }catch(error){showError(error);}
 });
-function showError(error){document.getElementById('error').textContent=String(error);status.textContent='Unable to launch';}
+function showError(error){
+ ready=false;play.hidden=true;bar.style.display='none';
+ document.getElementById('error').textContent=String(error);status.textContent='Unable to load';
+}
 </script>
 </body>
 </html>
