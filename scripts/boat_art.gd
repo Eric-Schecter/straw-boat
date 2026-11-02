@@ -21,4 +21,3 @@ static func draw_arrow(n: Node2D, tip: Vector2, a: float, length: float = 48) ->
 		n.draw_colored_polygon(points,Color("d8e6df") if side > 0 else Color("9bbebd"))
 		line(n,tail-d*6+normal*side*3,tail+d*6,Color(1,1,0.89,0.55),0.8)
 	n.draw_colored_polygon(PackedVector2Array([tip+d*4,tip-d*5+normal*3,tip-d*4-normal*3]),Color("d0e5e5"))
-

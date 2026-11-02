@@ -42,4 +42,5 @@ with zipfile.ZipFile(Remote()) as z:
   if n == 'templates/web_nothreads_release.zip':
    print('Fetching',n,z.getinfo(n).compress_size,'compressed bytes',flush=True)
    out=pathlib.Path('.export_templates')/pathlib.Path(n).name
+   out.parent.mkdir(parents=True,exist_ok=True)
    out.write_bytes(z.read(n)); print('Saved',out,out.stat().st_size,flush=True)
