@@ -72,9 +72,12 @@ var bgm_button: Button
 
 func _ready() -> void:
 	bgm = AudioStreamPlayer.new()
-	var music = preload("res://assets/audio/strawboat-bgm.ogg")
-	music.loop = true
+	var music = preload("res://assets/audio/strawboat-bgm.wav")
+	music.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	music.loop_begin = 0
+	music.loop_end = music.data.size() / (4 if music.stereo else 2)
 	bgm.stream = music
+	bgm.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	var settings = ConfigFile.new()
 	if settings.load("user://audio.cfg") == OK:
 		bgm_enabled = bool(settings.get_value("audio", "bgm_enabled", true))
