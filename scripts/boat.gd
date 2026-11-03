@@ -66,8 +66,16 @@ var turn_input := false
 var pointer_direction := 0.0
 var active_touch := -1
 var paused := false
+var bgm: AudioStreamPlayer
 
 func _ready() -> void:
+	bgm = AudioStreamPlayer.new()
+	var music = preload("res://assets/audio/strawboat-bgm.ogg")
+	music.loop = true
+	bgm.stream = music
+	bgm.volume_db = -16.0
+	add_child(bgm)
+	bgm.play()
 	shot_rng.randomize()
 	river = ColorRect.new()
 	river.size = VIEW
@@ -350,6 +358,7 @@ func spray(p: Vector2, color: Color, count: int) -> void:
 	for i in range(count): effects.append({"p":p,"v":Vector2.from_angle(randf()*TAU)*randf_range(20,100),"life":randf_range(0.3,0.9),"c":color})
 
 func _process(dt: float) -> void:
+	bgm.stream_paused = paused
 	time += dt
 	river_material.set_shader_parameter("flow_time",time)
 	if not paused:

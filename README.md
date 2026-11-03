@@ -15,3 +15,5 @@ A cozy game about catching arrows with a straw boat.
 - Use A/D or arrow keys to turn, P to pause, and R to restart.
 
 Boat and cover art were generated with AI. Nunito is licensed under the [SIL Open Font License](assets/fonts/OFL.txt).
+
+Music uses CC0 harp and marimba samples from [VSCO Community Edition](https://versilian-studios.com/vsco-community/) by Versilian Studios.
