@@ -9,19 +9,19 @@
 <link rel="alternate icon" type="image/png" href="favicon.png?v=1">
 <link rel="apple-touch-icon" href="favicon.png?v=1">
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#a8c9cc;font-family:ui-rounded,system-ui,sans-serif;color:#5d607f}
-#canvas{display:block;width:100%;height:100%;outline:none;touch-action:none}
-#launch{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#a8c9cc;z-index:2;padding:16px;box-sizing:border-box;gap:16px}
-.cover{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100% - 150px);object-fit:contain;border-radius:22px;box-shadow:0 8px 28px #405d6a30}
-.panel{text-align:center;background:#fffbef;padding:14px 28px;border:2px solid #fff;border-radius:22px;box-shadow:0 4px 0 #adaabd;max-width:80vw}
-button{font:700 19px ui-rounded,system-ui,sans-serif;color:#5d607f;background:#dff0dd;border:2px solid #fff;padding:10px 36px;border-radius:17px;box-shadow:0 4px 0 #b6c7b7;cursor:pointer}button:disabled{cursor:wait;opacity:.65}#status{font-size:13px;margin:10px 0 0;color:#878aa0}progress{width:200px;height:7px;accent-color:#edba76;display:block;margin:4px auto 12px}#error{white-space:pre-wrap;max-width:400px;font-size:14px;color:#a65e68}#error:empty{display:none}
-
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#668f98;color:#fff8dd;font-family:system-ui,sans-serif}#canvas{display:block;width:100%;height:100%;outline:none;touch-action:none}
+#launch{position:fixed;inset:0;z-index:2;display:grid;place-items:center;padding:clamp(18px,4vw,56px);isolation:isolate;background:#668f98}
+#launch:before{content:"";position:absolute;inset:-50px;z-index:-1;background:linear-gradient(#658d9870,#365c74bb),url(cover.png) center/cover;filter:blur(28px);opacity:.8}
+.cover-card{position:relative;width:min(320px,72vw,calc(60svh * 1672 / 941));aspect-ratio:1672/941;overflow:visible;border-radius:16px;background:#164b5a url(cover.png) center/cover no-repeat;border:1px solid #f4d48640;box-shadow:0 28px 80px #031e3180,0 4px 16px #031e3140;transition:filter .18s,transform .18s}.cover-card:has(#play:not(:disabled)):hover,.cover-card:focus-within{filter:brightness(1.025);transform:scale(1.018)}.cover-card:has(#play:not(:disabled)):active{transform:scale(.99)}
+.panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:16px}
+#play{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;color:#fff4d2;cursor:pointer;font:500 13px system-ui,sans-serif}#play:focus-visible{outline:2px solid #ffe4a4;outline-offset:-3px}#play:disabled{cursor:wait}[hidden]{display:none!important}.panel{pointer-events:none}@media(prefers-reduced-motion:reduce){.cover-card{transition:none}.cover-card:has(#play:not(:disabled)):hover,.cover-card:has(#play:not(:disabled)):active{transform:none}}
+#status{margin:0;font-size:13px;text-shadow:0 2px 5px #102d3b;background:#668f98dd;border-radius:999px;padding:7px 14px}#status:empty{display:none}progress{width:min(210px,60%);height:6px;accent-color:#f6d580}#error{max-width:600px;white-space:pre-wrap;color:#ffd2bd;margin:0;background:#668f98ed;border-radius:12px;padding:12px}#error:empty{display:none}
 </style>
 $GODOT_HEAD_INCLUDE
 </head>
 <body>
 <canvas id="canvas" tabindex="0">Your browser needs WebGL 2 to play Strawboat.</canvas>
-<div id="launch"><img class="cover" src="cover.png" alt="Strawboat — a cozy straw boat catching colorful arrows"><div class="panel"><progress id="progress"></progress><button id="play" hidden disabled>Play</button><p id="status">Preparing your boat</p><p id="error"></p></div></div>
+<section id="launch" aria-label="Strawboat game cover"><div class="cover-card"><div class="panel"><progress id="progress" aria-label="Loading game"></progress><p id="status" role="status">Loading Strawboat…</p><p id="error" role="alert"></p></div><button id="play" aria-label="Play Strawboat" hidden disabled></button></div></section>
 <script src="$GODOT_URL"></script>
 <script>
 const config = $GODOT_CONFIG;
@@ -38,12 +38,12 @@ const pack=config.mainPack || `${executable}.pck`;
 let ready=false;
 // Download and initialize the runtime without starting the game clock or audio.
 Promise.all([engine.init(executable),engine.preloadFile(pack,pack)]).then(()=>{
- ready=true;bar.style.display='none';status.textContent='Ready to sail';
+ ready=true;bar.style.display='none';status.textContent='';
  play.disabled=false;play.hidden=false;
 }).catch(showError);
 play.addEventListener('click',async()=>{
  if(!ready)return;
- ready=false;play.disabled=true;play.textContent='Setting sail…';status.textContent='';
+ ready=false;play.disabled=true;status.textContent='Setting sail…';
  try {
   // start() reuses the prepared runtime and pack; no second resource download.
   await engine.start({args:['--main-pack',pack,...(config.args || [])]});
