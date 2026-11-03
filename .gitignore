@@ -12,3 +12,6 @@ artifacts/
 *.log
 .env
 .env.*
+
+# Keep BGM PCM import settings consistent in CI.
+!assets/audio/strawboat-bgm.wav.import
