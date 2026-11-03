@@ -10,6 +10,8 @@ godot --headless --export-release Web build/web/index.html
 cp assets/fonts/OFL.txt build/web/FONT-LICENSE.txt
 cp assets/favicon.svg assets/favicon.png build/web/
 cp assets/strawboat-cover-v1.png build/web/cover.png
+cp assets/audio/menu-hover.wav build/web/hover.wav
+cp assets/audio/menu-press.wav build/web/press.wav
 python3 - <<'PY'
 from pathlib import Path
 import zipfile

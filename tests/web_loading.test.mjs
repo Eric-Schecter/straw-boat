@@ -16,7 +16,7 @@ function page() {
   const runtime = deferred(), pack = deferred(), calls = [];
   const elements = Object.fromEntries(['canvas', 'play', 'progress', 'status', 'error', 'launch'].map(id => [id, {
     hidden: id === 'play', disabled: true, style: {}, textContent: '',
-    addEventListener(_, handler) { this.click = handler; },
+    addEventListener(event, handler) { this[event] = handler; },
     removeAttribute() {}, remove() { this.removed = true; }, focus() { this.focused = true; }
   }]));
   class Engine {
@@ -24,7 +24,8 @@ function page() {
     preloadFile(...args) { calls.push(['preload', ...args]); return pack.promise; }
     async start(options) { calls.push(['start', ...options.args]); }
   }
-  runInNewContext(code, { Engine, document: { getElementById: id => elements[id] } });
+  class Audio { constructor(src) { this.src = src; } play() { calls.push(['sound', this.src]); return Promise.resolve(); } }
+  runInNewContext(code, { Engine, Audio, performance: { now: () => 1000 }, document: { getElementById: id => elements[id] } });
   return { elements, runtime, pack, calls };
 }
 
@@ -40,7 +41,8 @@ test('preloads on page load; Play appears only after runtime and pack are ready'
   assert.equal(p.calls.length, 2); // No game timer starts while waiting for a click.
   await p.elements.play.click();
   assert.deepEqual(p.calls.at(-1), ['start', '--main-pack', 'index.pck']);
-  assert.equal(p.calls.length, 3); // Runtime and pack were not downloaded again.
+  assert.deepEqual(p.calls.at(-2), ['sound', 'press.wav']);
+  assert.equal(p.calls.length, 4); // Runtime and pack were not downloaded again.
   assert.equal(p.elements.launch.removed, true);
 });
 

@@ -41,8 +41,15 @@ Promise.all([engine.init(executable),engine.preloadFile(pack,pack)]).then(()=>{
  ready=true;bar.style.display='none';status.textContent='';
  play.disabled=false;play.hidden=false;
 }).catch(showError);
+const hoverSound=new Audio('hover.wav'),pressSound=new Audio('press.wav');
+hoverSound.volume=.75;pressSound.volume=.85;
+let lastHover=-Infinity;
+function sound(clip){clip.currentTime=0;const pending=clip.play();if(pending)pending.catch(()=>{});}
+play.addEventListener('pointerenter',()=>{const now=performance.now();if(ready && now-lastHover>180){sound(hoverSound);lastHover=now;}});
+play.addEventListener('focus',()=>{if(ready && !play.matches(':hover'))sound(hoverSound);});
 play.addEventListener('click',async()=>{
  if(!ready)return;
+ sound(pressSound);
  ready=false;play.disabled=true;status.textContent='Setting sail…';
  try {
   // start() reuses the prepared runtime and pack; no second resource download.
