@@ -1,5 +1,7 @@
 # Strawboat
 
+![Strawboat](assets/strawboat-cover-v1.png)
+
 A cozy game about catching arrows with a straw boat.
 
 [Play in your browser](https://eric-schecter.github.io/straw-boat/)

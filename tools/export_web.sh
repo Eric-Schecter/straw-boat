@@ -9,6 +9,7 @@ godot --headless --editor --import --quit
 godot --headless --export-release Web build/web/index.html
 cp assets/fonts/OFL.txt build/web/FONT-LICENSE.txt
 cp assets/favicon.svg assets/favicon.png build/web/
+cp assets/strawboat-cover-v1.png build/web/cover.png
 python3 - <<'PY'
 from pathlib import Path
 import zipfile
