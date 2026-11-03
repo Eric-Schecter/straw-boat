@@ -67,13 +67,18 @@ var pointer_direction := 0.0
 var active_touch := -1
 var paused := false
 var bgm: AudioStreamPlayer
+var bgm_enabled := true
+var bgm_button: Button
 
 func _ready() -> void:
 	bgm = AudioStreamPlayer.new()
 	var music = preload("res://assets/audio/strawboat-bgm.ogg")
 	music.loop = true
 	bgm.stream = music
-	bgm.volume_db = -16.0
+	var settings = ConfigFile.new()
+	if settings.load("user://audio.cfg") == OK:
+		bgm_enabled = bool(settings.get_value("audio", "bgm_enabled", true))
+	bgm.volume_db = -16.0 if bgm_enabled else -80.0
 	add_child(bgm)
 	bgm.play()
 	shot_rng.randomize()
@@ -107,6 +112,25 @@ func _ready() -> void:
 		system_font.font_names = PackedStringArray(["Arial Rounded MT Bold", "Arial Rounded MT", "Arial", "PingFang SC"])
 		system_font.font_weight = 700
 		font = system_font
+	var music_ui = CanvasLayer.new()
+	add_child(music_ui)
+	bgm_button = Button.new()
+	bgm_button.text = "BGM ON" if bgm_enabled else "BGM OFF"
+	bgm_button.tooltip_text = "Toggle background music"
+	bgm_button.add_theme_font_override("font", font)
+	bgm_button.add_theme_font_size_override("font_size", 14)
+	bgm_button.add_theme_color_override("font_color", ToyUI.TEXT)
+	var music_style = StyleBoxFlat.new()
+	music_style.bg_color = ToyUI.CREAM
+	music_style.set_corner_radius_all(16)
+	music_style.set_border_width_all(2)
+	music_style.border_color = Color.WHITE
+	bgm_button.add_theme_stylebox_override("normal", music_style)
+	bgm_button.add_theme_stylebox_override("hover", music_style)
+	bgm_button.add_theme_stylebox_override("pressed", music_style)
+	bgm_button.custom_minimum_size = Vector2(100,44)
+	bgm_button.pressed.connect(toggle_bgm)
+	music_ui.add_child(bgm_button)
 	rewards = preload("res://scripts/reward_fx.gd").new()
 	rewards.font = font
 	rewards.boat_center = C
@@ -195,6 +219,15 @@ func advance() -> void:
 	if phase == "win":
 		level = level + 1 if level < LESSONS.size() else 1
 	start()
+
+func toggle_bgm() -> void:
+	bgm_enabled = not bgm_enabled
+	bgm.volume_db = -16.0 if bgm_enabled else -80.0
+	bgm_button.text = "BGM ON" if bgm_enabled else "BGM OFF"
+	clear_pointer()
+	var settings = ConfigFile.new()
+	settings.set_value("audio", "bgm_enabled", bgm_enabled)
+	settings.save("user://audio.cfg")
 
 func clear_pointer() -> void:
 	turn_input = false
@@ -358,6 +391,7 @@ func spray(p: Vector2, color: Color, count: int) -> void:
 	for i in range(count): effects.append({"p":p,"v":Vector2.from_angle(randf()*TAU)*randf_range(20,100),"life":randf_range(0.3,0.9),"c":color})
 
 func _process(dt: float) -> void:
+	bgm_button.position = Vector2(VIEW.x-124, VIEW.y-68)
 	bgm.stream_paused = paused
 	time += dt
 	river_material.set_shader_parameter("flow_time",time)
