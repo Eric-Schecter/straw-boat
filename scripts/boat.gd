@@ -122,14 +122,18 @@ func _ready() -> void:
 	bgm_button.tooltip_text = "Toggle background music"
 	bgm_button.add_theme_font_override("font", font)
 	bgm_button.add_theme_font_size_override("font_size", 14)
-	bgm_button.add_theme_color_override("font_color", ToyUI.TEXT)
+	bgm_button.focus_mode = Control.FOCUS_NONE
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		bgm_button.add_theme_color_override(state, ToyUI.TEXT)
 	var music_style = StyleBoxFlat.new()
 	music_style.bg_color = ToyUI.CREAM
 	music_style.set_corner_radius_all(16)
 	music_style.set_border_width_all(2)
 	music_style.border_color = Color.WHITE
 	bgm_button.add_theme_stylebox_override("normal", music_style)
-	bgm_button.add_theme_stylebox_override("hover", music_style)
+	var hover_style = music_style.duplicate()
+	hover_style.bg_color = Color("dcebe4")
+	bgm_button.add_theme_stylebox_override("hover", hover_style)
 	bgm_button.add_theme_stylebox_override("pressed", music_style)
 	bgm_button.custom_minimum_size = Vector2(100,44)
 	bgm_button.pressed.connect(toggle_bgm)
@@ -218,6 +222,7 @@ func start() -> void:
 	feedback_time = lesson().prepare + 2
 
 func advance() -> void:
+	if paused: return
 	if failure_delay > 0 or win_delay > 0: return
 	if phase == "win":
 		level = level + 1 if level < LESSONS.size() else 1
@@ -237,20 +242,33 @@ func clear_pointer() -> void:
 	pointer_direction = 0
 	active_touch = -1
 
+func continue_rect() -> Rect2:
+	return Rect2(panel_center+Vector2(-156,110),Vector2(312,54))
+
+func quit_rect() -> Rect2:
+	return Rect2(panel_center+Vector2(-156,38),Vector2(312,54))
+
+func exit_game() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.location.reload();")
+	else:
+		get_tree().quit()
+
 func pointer_event(position: Vector2, pressed: bool) -> void:
 	if not pressed:
 		clear_pointer()
 		return
-	if phase == "play" and position.distance_to(PAUSE_POS) < 28:
+	if position.distance_to(PAUSE_POS) < 28:
 		paused = not paused
 		clear_pointer()
 		return
-	if paused and phase == "play":
-		paused = false
+	if paused:
+		if continue_rect().has_point(position): paused = false
+		elif quit_rect().has_point(position): exit_game()
 		clear_pointer()
 		return
 	if phase != "play":
-		advance()
+		if continue_rect().has_point(position): advance()
 		clear_pointer()
 		return
 	turn_input = true
@@ -258,11 +276,13 @@ func pointer_event(position: Vector2, pressed: bool) -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
-		if e.keycode == KEY_R: start()
-		if e.keycode in [KEY_P,KEY_ESCAPE] and phase == "play":
+		if e.keycode == KEY_R and not paused and phase == "play": start()
+		if e.keycode in [KEY_P,KEY_ESCAPE]:
 			paused = not paused
 			clear_pointer()
-		if e.keycode in [KEY_ENTER,KEY_SPACE] and phase != "play": advance()
+		if e.keycode in [KEY_ENTER,KEY_SPACE]:
+			if paused: paused = false
+			elif phase != "play": advance()
 	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and active_touch < 0 and e.device != -1:
 		pointer_event(e.position,e.pressed)
 	if e is InputEventMouseMotion and turn_input and active_touch < 0:
@@ -419,6 +439,7 @@ func _process(dt: float) -> void:
 				# Small early spread and rhythm variation grow with each stage.
 				lane = C.y + next_shot_offset() * BOAT_SCALE
 				arrows.append({"p":Vector2(LAUNCH_X, lane),"speed":lesson().speed * FLIGHT_SCALE})
+				rewards.play_launch()
 				fired += 1
 				burst_left -= 1
 				burst_timer = next_shot_gap()
@@ -526,6 +547,8 @@ func _draw() -> void:
 		if paused:
 			label("Take a breather",panel_center+Vector2(0,-132),26)
 			label("Your next breeze can wait.",panel_center+Vector2(0,-20),18,ToyUI.MUTED)
+			ToyUI.slab(self,quit_rect(),Color("f4e3df"),22,4)
+			label("Exit Game",panel_center+Vector2(0,72),20)
 			label("Resume",panel_center+Vector2(0,143),21)
 		else:
 			label(("Homeward Bound" if level == LESSONS.size() else "Well Caught!") if phase == "win" else "Try another voyage",panel_center+Vector2(0,-132),26,ToyUI.TEXT)
@@ -647,9 +670,22 @@ func test_game() -> void:
 	click.position = PAUSE_POS
 	_unhandled_input(click)
 	assert(paused and not turn_input)
-	click.position = panel_center
+	click.position = continue_rect().get_center()
 	_unhandled_input(click)
 	assert(not paused and not turn_input)
+	# Pausing a result never advances the underlying round.
+	phase = "win"
+	win_delay = 0
+	var completed_level = level
+	pointer_event(PAUSE_POS,true)
+	assert(paused and phase == "win" and level == completed_level)
+	pointer_event(continue_rect().get_center(),true)
+	assert(not paused and phase == "win" and level == completed_level)
+	pointer_event(panel_center,true)
+	assert(level == completed_level and phase == "win")
+	pointer_event(continue_rect().get_center(),true)
+	assert(level == completed_level+1 and phase == "play")
+	level = completed_level
 	# Last volley is allowed to finish, including the last in-flight arrow.
 	start()
 	wave = int(lesson().volleys)

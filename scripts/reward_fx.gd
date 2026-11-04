@@ -21,8 +21,22 @@ var victory_audio: AudioStreamPlayer
 var impact_audio: AudioStreamPlayer
 var impact_sounds: Dictionary = {}
 var last_impact := ""
+var launch_audio: AudioStreamPlayer
+var launch_rng := RandomNumberGenerator.new()
+var last_launch := -1
+var launch_sounds: Array[AudioStreamWAV] = [
+	preload("res://assets/audio/launch-1.wav"),
+	preload("res://assets/audio/launch-2.wav"),
+	preload("res://assets/audio/launch-3.wav"),
+	preload("res://assets/audio/launch-4.wav")
+]
 
 func _ready() -> void:
+	launch_rng.randomize()
+	launch_audio = AudioStreamPlayer.new()
+	launch_audio.max_polyphony = 4
+	launch_audio.volume_db = -6.0
+	add_child(launch_audio)
 	audio = AudioStreamPlayer.new()
 	add_child(audio)
 	for hz in [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5]:
@@ -79,6 +93,14 @@ func make_impact(kind: String) -> AudioStreamWAV:
 	result.data = data
 	return result
 
+func play_launch() -> void:
+	if "--boat-test" in OS.get_cmdline_user_args(): return
+	var pick = launch_rng.randi_range(0,launch_sounds.size()-1) if last_launch < 0 else launch_rng.randi_range(0,launch_sounds.size()-2)
+	if last_launch >= 0 and pick >= last_launch: pick += 1
+	last_launch = pick
+	launch_audio.stream = launch_sounds[pick]
+	launch_audio.play()
+
 func play_impact(kind: String) -> void:
 	last_impact = kind
 	if "--boat-test" in OS.get_cmdline_user_args(): return
@@ -94,6 +116,7 @@ func reset() -> void:
 	victory = 0
 	progress = 0
 	target_progress = 0
+	launch_audio.stop()
 	audio.stop()
 	impact_audio.stop()
 	victory_audio.stop()

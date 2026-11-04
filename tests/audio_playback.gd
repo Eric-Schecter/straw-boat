@@ -17,12 +17,15 @@ func run() -> void:
 		assert(fx.victory_audio.playback_type == AudioServer.PLAYBACK_TYPE_STREAM)
 		assert(fx.audio.playing and fx.victory_audio.playing)
 		# Another sound must not stop or replace the celebration.
+		fx.play_launch()
+		assert(fx.launch_audio.playing)
+		assert(fx.launch_audio != fx.audio)
 		fx.play_impact("clang")
 		await process_frame
 		assert(fx.victory_audio.playing)
 		assert(fx.victory_audio.stream == fx.fanfare)
 	fx.reset()
-	assert(not fx.audio.playing and not fx.victory_audio.playing)
+	assert(not fx.audio.playing and not fx.victory_audio.playing and not fx.launch_audio.playing)
 	fx.queue_free()
 	await process_frame
 	print("PASS: 20 final-catch/victory overlaps, impact isolation and reset")
