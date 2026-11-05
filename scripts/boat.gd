@@ -243,7 +243,7 @@ func clear_pointer() -> void:
 	active_touch = -1
 
 func continue_rect() -> Rect2:
-	return Rect2(panel_center+Vector2(-156,110),Vector2(312,54))
+	return Rect2(panel_center+Vector2(-156,42 if paused and OS.has_feature("web") else 110),Vector2(312,54))
 
 func quit_rect() -> Rect2:
 	return Rect2(panel_center+Vector2(-156,38),Vector2(312,54))
@@ -538,17 +538,19 @@ func _draw() -> void:
 	for a in deflected:
 		Art.draw_arrow(self,a.p,a.a)
 	if (phase != "play" and failure_delay <= 0 and win_delay <= 0) or paused:
-		ToyUI.slab(self,Rect2(panel_center-Vector2(235,207),Vector2(470,414)),Color("fbf8ff"),32,7)
+		var compact_pause = paused and OS.has_feature("web")
+		var half_height = 130.0 if compact_pause else 207.0
+		ToyUI.slab(self,Rect2(panel_center-Vector2(235,half_height),Vector2(470,half_height*2)),Color("fbf8ff"),32,7)
 		# A small fabric-like ribbon gives the result card the boat's warm accent.
-		ToyUI.slab(self,Rect2(panel_center+Vector2(-146,-173),Vector2(292,64)),Color("ffe4d8"),22,2)
-		ToyUI.slab(self,Rect2(panel_center+Vector2(-156,110),Vector2(312,54)),Color("e1f1df"),22,4)
+		ToyUI.slab(self,Rect2(panel_center+Vector2(-146,-100 if compact_pause else -173),Vector2(292,64)),Color("ffe4d8"),22,2)
+		ToyUI.slab(self,continue_rect(),Color("e1f1df"),22,4)
 		if paused:
-			label("Take a breather",panel_center+Vector2(0,-132),26)
-			label("Your next breeze can wait.",panel_center+Vector2(0,-20),18,ToyUI.MUTED)
+			label("Take a breather",panel_center+Vector2(0,-59 if compact_pause else -132),26)
+			label("Your next breeze can wait.",panel_center+Vector2(0,8 if compact_pause else -20),18,ToyUI.MUTED)
 			if not OS.has_feature("web"):
 				ToyUI.slab(self,quit_rect(),Color("f4e3df"),22,4)
 				label("Exit Game",panel_center+Vector2(0,72),20)
-			label("Resume",panel_center+Vector2(0,143),21)
+			label("Resume",continue_rect().position+Vector2(156,34),21)
 		else:
 			label(("Homeward Bound" if level == LESSONS.size() else "Well Caught!") if phase == "win" else "Try another voyage",panel_center+Vector2(0,-132),26,ToyUI.TEXT)
 			if phase == "win":
