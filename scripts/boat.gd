@@ -249,9 +249,7 @@ func quit_rect() -> Rect2:
 	return Rect2(panel_center+Vector2(-156,38),Vector2(312,54))
 
 func exit_game() -> void:
-	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.location.reload();")
-	else:
+	if not OS.has_feature("web"):
 		get_tree().quit()
 
 func pointer_event(position: Vector2, pressed: bool) -> void:
@@ -264,7 +262,7 @@ func pointer_event(position: Vector2, pressed: bool) -> void:
 		return
 	if paused:
 		if continue_rect().has_point(position): paused = false
-		elif quit_rect().has_point(position): exit_game()
+		elif not OS.has_feature("web") and quit_rect().has_point(position): exit_game()
 		clear_pointer()
 		return
 	if phase != "play":
@@ -547,8 +545,9 @@ func _draw() -> void:
 		if paused:
 			label("Take a breather",panel_center+Vector2(0,-132),26)
 			label("Your next breeze can wait.",panel_center+Vector2(0,-20),18,ToyUI.MUTED)
-			ToyUI.slab(self,quit_rect(),Color("f4e3df"),22,4)
-			label("Exit Game",panel_center+Vector2(0,72),20)
+			if not OS.has_feature("web"):
+				ToyUI.slab(self,quit_rect(),Color("f4e3df"),22,4)
+				label("Exit Game",panel_center+Vector2(0,72),20)
 			label("Resume",panel_center+Vector2(0,143),21)
 		else:
 			label(("Homeward Bound" if level == LESSONS.size() else "Well Caught!") if phase == "win" else "Try another voyage",panel_center+Vector2(0,-132),26,ToyUI.TEXT)
